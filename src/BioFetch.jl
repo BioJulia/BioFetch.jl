@@ -10,7 +10,7 @@ using BioServices.EUtils
 function fetchseq(ids::AbstractString...; format::Format = :fasta)
     response = efetch(db = "nuccore", id = ids, rettype = String(format), retmode="text")
     body = IOBuffer(response.body)
-    if format == :fasta
+    if format == fasta
         reader = FASTA.Reader(body)
         records = [record for record ∈ reader]
     else
@@ -18,7 +18,5 @@ function fetchseq(ids::AbstractString...; format::Format = :fasta)
     end
     return records
 end
-
-
 
 end
