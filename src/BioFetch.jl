@@ -23,9 +23,9 @@ fetchseq("CAA41295.1", "NP_000176"; format = gb) # retrieve two GenBank flatfile
 function fetchseq(ids::AbstractString...; format::Format = fasta)
     ncbinucleotides = String[]
     ncbiproteins = String[]
-    ebiubiprots = String[]
+    ebiuniprots = String[]
     ebiensembls = String[]
-    order = IdDict(ncbinucleotides => [], ncbiproteins => [], ebiubiprots => [], ebiensembls => [])
+    order = IdDict(ncbinucleotides => [], ncbiproteins => [], ebiuniprots => [], ebiensembls => [])
     for (i, id) ∈ enumerate(ids)
         ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
         ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
@@ -46,13 +46,15 @@ function fetchseq(ids::AbstractString...; format::Format = fasta)
                fetchseq_ncbi(ncbiproteins, "protein"; format);
                fetchseq_uniprot(ebiuniprots; format);
                fetchseq_ensembl(ebiensembls; format)]
-    order = [order[ncbinucleotides]; order[ncbiproteins]; order[ebiubiprots]; order[ebiensembls]]
+    order = [order[ncbinucleotides]; order[ncbiproteins]; order[ebiuniprots]; order[ebiensembls]]
             
     return results[order]
 end
 
 function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString; format::Format = fasta)
+    isempty(ids) && return []
     response = efetch(; db, id = ids, rettype = String(Symbol(format)), retmode="text")
+    println(response.body)
     body = IOBuffer(response.body)
     if format == fasta
         reader = FASTA.Reader(body)
@@ -64,6 +66,7 @@ function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString
 end
 
 function fetchseq_uniprot(ids::AbstractVector{<:AbstractString}; format::Format = fasta)
+    isempty(ids) && return []
     records = []
     contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
     for id ∈ ids
@@ -81,6 +84,7 @@ function fetchseq_uniprot(ids::AbstractVector{<:AbstractString}; format::Format 
 end
 
 function fetchseq_ensembl(ids::AbstractVector{<:AbstractString}; format::Format = fasta)
+    isempty(ids) && return []
     records = []
     contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
     for id ∈ ids
