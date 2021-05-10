@@ -4,7 +4,7 @@ using FASTX
 using GenomicAnnotations
 using BioServices.EUtils
 
-export fetchseq
+export fetchseq, fasta
 
 @enum Format fasta gb
 
@@ -15,9 +15,11 @@ Fetches sequence data from a database by accession number in either FASTA format
 Nucleotide and protein records may be mixed. Results will be returned in the order provided.
 Supports NCBI, Ensembl, and UniProt accession numbers.
 
+GenBank format may not work right now.
+
 ```julia
-fetchseq("AH002844")                             # retrive one FASTA NCBI nucleotide record
-fetchseq("CAA41295.1", "NP_000176"; format = gb) # retrieve two GenBank flatfile NCBI protein records
+fetchseq("AH002844")                # retrive one FASTA NCBI nucleotide record
+fetchseq("CAA41295.1", "NP_000176") # retrieve two FASTA NCBI protein records
 ```
 """
 function fetchseq(ids::AbstractString...; format::Format = fasta)
@@ -34,7 +36,7 @@ function fetchseq(ids::AbstractString...; format::Format = fasta)
         ncbiprotein || ncbinucleotide || ebiuniprot || ebiensembl || throw("could not infer database for $id")
 
         array = ncbinucleotide ? ncbinucleotides :
-                ncbiproteins ? ncbiproteins :
+                ncbiprotein ? ncbiproteins :
                 ebiuniprot ? ebiuniprots :
                 ebiensembl ? ebiensembls :
                 error()
@@ -57,8 +59,8 @@ function fetchseq(id::AbstractString; format::Format = BioFetch.fasta)
     ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
     ebiuniprot = startswith(id, r"[A-Z][0-9][A-Z0-9]{4}")
 
-    return ncbinucleotide ? fetchseq_ncbi(id, "nuccore"; format) :
-           ncbiprotein ? fetchseq_ncbi(id, "protein"; format) :
+    return ncbinucleotide ? fetchseq_ncbi(id, "nuccore"; format) |> first :
+           ncbiprotein ? fetchseq_ncbi(id, "protein"; format) |> first :
            ebiuniprot ? fetchseq_uniprot(id; format) :
            ebiensembl ? fetchseq_ensembl(id; format) :
            error("could not infer database for $id")
