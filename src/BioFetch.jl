@@ -4,6 +4,8 @@ using FASTX
 using GenomicAnnotations
 using BioServices.EUtils
 
+export fetchseq
+
 @enum Format fasta gb
 
 """
@@ -19,11 +21,11 @@ fetchseq("CAA41295.1", "NP_000176"; format = gb) # retrieve two GenBank flatfile
 ```
 """
 function fetchseq(ids::AbstractString...; format::Format = fasta)
-    ncbinucleotides = []
-    ncbiproteins = []
-    ebiubiprots = []
-    ebiensembls = []
-    order = IdDict(ncbinucleotides => [], ncbiproteins => [], ebiubiprots => [], ebiensembls = [])
+    ncbinucleotides = String[]
+    ncbiproteins = String[]
+    ebiubiprots = String[]
+    ebiensembls = String[]
+    order = IdDict(ncbinucleotides => [], ncbiproteins => [], ebiubiprots => [], ebiensembls => [])
     for (i, id) ∈ enumerate(ids)
         ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
         ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
@@ -50,7 +52,7 @@ function fetchseq(ids::AbstractString...; format::Format = fasta)
 end
 
 function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString; format::Format = fasta)
-    response = efetch(db = String(Symbol(db)), id = ids, rettype = String(Symbol(format)), retmode="text")
+    response = efetch(; db, id = ids, rettype = String(Symbol(format)), retmode="text")
     body = IOBuffer(response.body)
     if format == fasta
         reader = FASTA.Reader(body)
