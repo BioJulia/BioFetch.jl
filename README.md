@@ -11,5 +11,5 @@ Examples:
 fetchseq("AH002844")                # retrive one FASTA NCBI nucleotide record
 fetchseq("CAA41295.1", "NP_000176") # retrieve two FASTA NCBI protein records
 fetchseq("Q00987")                  # retrieve one UniProt protein record
-fetchseq("ENSG00000141510")         # retrieve one Ensembl gene record
+fetchseq("ENSG00000141510")         # retrieve one Ensembl gene record's proteins
 ```
