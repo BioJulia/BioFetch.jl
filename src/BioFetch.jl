@@ -3,6 +3,7 @@ module BioFetch
 using FASTX
 using GenomicAnnotations
 using BioServices.EUtils
+using BioServices.EBIProteins
 
 export fetchseq, fasta
 
