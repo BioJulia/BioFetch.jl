@@ -1,4 +1,15 @@
+name = "BioFetch"
+uuid = "f8217676-c24a-4825-a874-ba6ce2a4fe08"
+authors = ["Nicholas Bauer <nicholasbauer@outlook.com>"]
+version = "0.1.0"
+
 [deps]
 BioServices = "a0d4ced5-b29c-5395-b614-ca030a679c4b"
 FASTX = "c2308a5c-f048-11e8-3e8a-31650f418d12"
 GenomicAnnotations = "4f8a0a0a-376d-5ac0-ab14-e88793df67f0"
+
+[compat]
+julia = "1.6"
+BioServices = "0.4"
+FASTX = "1"
+GenomicAnnotations = "0.2"
