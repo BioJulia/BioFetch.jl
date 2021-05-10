@@ -20,30 +20,35 @@ fetchseq("CAA41295.1", "NP_000176"; format = gb) # retrieve two GenBank flatfile
 function fetchseq(ids::AbstractString...; format::Format = fasta)
     ncbinucleotides = []
     ncbiproteins = []
-    ncbinucleotidesorder = []
-    ncbiproteinsorder = []
+    ebiubiprots = []
+    ebiensembls = []
+    order = IdDict(ncbinucleotides => [], ncbiproteins => [], ebiubiprots => [], ebiensembls = [])
     for (i, id) ∈ enumerate(ids)
+        ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
         ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
-        ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]")
-        ncbiprotein && ncbinucleotide && throw("ambiguous identifier $id, cannot infer database")
-        ncbiprotein || ncbinucleotide || throw("could not infer database for $id")
+        ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
+        ebiuniprot = startswith(id, r"[A-Z][0-9][A-Z0-9]{4}")
+        ncbiprotein || ncbinucleotide || ebiuniprot || ebiensembl || throw("could not infer database for $id")
 
-        if ncbinucleotide
-            push!(ncbinucleotides, id)
-            push!(ncbinucleotidesorder, i)
-        elseif ncbiprotein
-            push!(ncbiproteins, id)
-            push!(ncbiproteinsorder, i)
-        end
+        array = ncbinucleotide ? ncbinucleotides :
+                ncbiproteins ? ncbiproteins :
+                ebiuniprot ? ebiuniprots :
+                ebiensembl ? ebiensembls :
+                error()
+        push!(array, id)
+        push!(order[array], id)
     end
 
-    results = [fetchseq_ncbi(ncbinucleotides, "nuccore", format);
-               fetchseq_ncbi(ncbiproteins, "protein", format)]
-
-    return [results[i] for i ∈ [ncbinucleotidesorder; ncbiproteinsorder]]
+    results = [fetchseq_ncbi(ncbinucleotides, "nuccore"; format);
+               fetchseq_ncbi(ncbiproteins, "protein"; format);
+               fetchseq_uniprot(ebiuniprots; format);
+               fetchseq_ensembl(ebiensembls; format)]
+    order = [order[ncbinucleotides]; order[ncbiproteins]; order[ebiubiprots]; order[ebiensembls]]
+            
+    return results[order]
 end
 
-function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString, format::Format)
+function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString; format::Format = fasta)
     response = efetch(db = String(Symbol(db)), id = ids, rettype = String(Symbol(format)), retmode="text")
     body = IOBuffer(response.body)
     if format == fasta
@@ -55,15 +60,36 @@ function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString
     return records
 end
 
-function fetchseq_ebi(ids::AbstractString...; format::Format = fasta)
-    response = 
-    response = efetch(db = String(Symbol(db)), id = ids, rettype = String(Symbol(format)), retmode="text")
-    body = IOBuffer(response.body)
-    if format == fasta
-        reader = FASTA.Reader(body)
-        records = [record for record ∈ reader]
-    else
-        records = readgbk(body)
+function fetchseq_uniprot(ids::AbstractVector{<:AbstractString}; format::Format = fasta)
+    records = []
+    contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
+    for id ∈ ids
+        response = ebiproteins(; accession = id, contenttype)
+        body = IOBuffer(response.body)
+        if format == fasta
+            reader = FASTA.Reader(body)
+            records = first(reader)
+        else
+            records = readgbk(body)
+        end
+        push!(records, record)
+    end
+    return records
+end
+
+function fetchseq_ensembl(ids::AbstractVector{<:AbstractString}; format::Format = fasta)
+    records = []
+    contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
+    for id ∈ ids
+        response = ebiproteins(; dbtype = "Ensembl", dbid = id, contenttype)
+        body = IOBuffer(response.body)
+        if format == fasta
+            reader = FASTA.Reader(body)
+            records = first(reader)
+        else
+            records = readgbk(body)
+        end
+        push!(records, record)
     end
     return records
 end
