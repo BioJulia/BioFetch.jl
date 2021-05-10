@@ -11,6 +11,7 @@ using BioServices.EUtils
 
 Fetches sequence data from a database by accession number in either FASTA format or GenBank flatfile format.
 Nucleotide and protein records may be mixed. Results will be returned in the order provided.
+Supports NCBI, Ensembl, and UniProt accession numbers.
 
 ```julia
 fetchseq("AH002844")                             # retrive one FASTA NCBI nucleotide record
