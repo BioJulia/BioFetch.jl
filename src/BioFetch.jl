@@ -60,11 +60,13 @@ function fetchseq(id::AbstractString; format::Format = BioFetch.fasta)
     ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
     ebiuniprot = startswith(id, r"[A-Z][0-9][A-Z0-9]{4}")
 
-    return ncbinucleotide ? fetchseq_ncbi(id, "nuccore"; format) |> first :
+    result = ncbinucleotide ? fetchseq_ncbi(id, "nuccore"; format) |> first :
            ncbiprotein ? fetchseq_ncbi(id, "protein"; format) |> first :
            ebiuniprot ? fetchseq_uniprot(id; format) :
            ebiensembl ? fetchseq_ensembl(id; format) :
            error("could not infer database for $id")
+    
+    return length(result) == 1 ? first(result) : result
 end
 
 function fetchseq_ncbi(ids, db::AbstractString; format::Format = fasta)
@@ -80,32 +82,6 @@ function fetchseq_ncbi(ids, db::AbstractString; format::Format = fasta)
     return records
 end
 
-function fetchseq_uniprot(id; format::Format = fasta)
-    contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
-    response = ebiproteins(; accession = id, contenttype)
-    body = IOBuffer(response.body)
-    if format == fasta
-        reader = FASTA.Reader(body)
-        record = first(reader)
-    else
-        record = readgbk(body)
-    end
-    return record
-end
-
-function fetchseq_ensembl(id; format::Format = fasta)
-    contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
-    response = ebiproteins(; dbtype = "Ensembl", dbid = id, contenttype)
-    body = IOBuffer(response.body)
-    if format == fasta
-        reader = FASTA.Reader(body)
-        record = first(reader)
-    else
-        record = readgbk(body)
-    end
-    return record
-end
-
 function fetchseq_uniprot(ids::AbstractVector; format::Format = fasta)
     isempty(ids) && return []
     records = []
@@ -115,11 +91,11 @@ function fetchseq_uniprot(ids::AbstractVector; format::Format = fasta)
         body = IOBuffer(response.body)
         if format == fasta
             reader = FASTA.Reader(body)
-            record = first(reader)
+            records = [record for record ∈ reader]
         else
-            record = readgbk(body)
+            records = readgbk(body)
         end
-        push!(records, record)
+        append!(records, record)
     end
     return records
 end
@@ -133,11 +109,11 @@ function fetchseq_ensembl(ids::AbstractVector; format::Format = fasta)
         body = IOBuffer(response.body)
         if format == fasta
             reader = FASTA.Reader(body)
-            record = first(reader)
+            records = [record for record ∈ reader]
         else
-            record = readgbk(body)
+            records = readgbk(body)
         end
-        push!(records, record)
+        append!(records, record)
     end
     return records
 end
