@@ -39,7 +39,7 @@ function fetchseq(ids::AbstractString...; format::Format = fasta)
                 ebiensembl ? ebiensembls :
                 error()
         push!(array, id)
-        push!(order[array], id)
+        push!(order[array], i)
     end
 
     results = [fetchseq_ncbi(ncbinucleotides, "nuccore"; format);
@@ -47,14 +47,26 @@ function fetchseq(ids::AbstractString...; format::Format = fasta)
                fetchseq_uniprot(ebiuniprots; format);
                fetchseq_ensembl(ebiensembls; format)]
     order = [order[ncbinucleotides]; order[ncbiproteins]; order[ebiuniprots]; order[ebiensembls]]
-            
+
     return results[order]
 end
 
-function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString; format::Format = fasta)
+function fetchseq(id::AbstractString; format::Format = BioFetch.fasta)
+    ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
+    ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
+    ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
+    ebiuniprot = startswith(id, r"[A-Z][0-9][A-Z0-9]{4}")
+
+    return ncbinucleotide ? fetchseq_ncbi(id, "nuccore"; format) :
+           ncbiprotein ? fetchseq_ncbi(id, "protein"; format) :
+           ebiuniprot ? fetchseq_uniprot(id; format) :
+           ebiensembl ? fetchseq_ensembl(id; format) :
+           error("could not infer database for $id")
+end
+
+function fetchseq_ncbi(ids, db::AbstractString; format::Format = fasta)
     isempty(ids) && return []
     response = efetch(; db, id = ids, rettype = String(Symbol(format)), retmode="text")
-    println(response.body)
     body = IOBuffer(response.body)
     if format == fasta
         reader = FASTA.Reader(body)
@@ -65,7 +77,33 @@ function fetchseq_ncbi(ids::AbstractVector{<:AbstractString}, db::AbstractString
     return records
 end
 
-function fetchseq_uniprot(ids::AbstractVector{<:AbstractString}; format::Format = fasta)
+function fetchseq_uniprot(id; format::Format = fasta)
+    contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
+    response = ebiproteins(; accession = id, contenttype)
+    body = IOBuffer(response.body)
+    if format == fasta
+        reader = FASTA.Reader(body)
+        record = first(reader)
+    else
+        record = readgbk(body)
+    end
+    return record
+end
+
+function fetchseq_ensembl(id; format::Format = fasta)
+    contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
+    response = ebiproteins(; dbtype = "Ensembl", dbid = id, contenttype)
+    body = IOBuffer(response.body)
+    if format == fasta
+        reader = FASTA.Reader(body)
+        record = first(reader)
+    else
+        record = readgbk(body)
+    end
+    return record
+end
+
+function fetchseq_uniprot(ids::AbstractVector; format::Format = fasta)
     isempty(ids) && return []
     records = []
     contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
@@ -74,16 +112,16 @@ function fetchseq_uniprot(ids::AbstractVector{<:AbstractString}; format::Format 
         body = IOBuffer(response.body)
         if format == fasta
             reader = FASTA.Reader(body)
-            records = first(reader)
+            record = first(reader)
         else
-            records = readgbk(body)
+            record = readgbk(body)
         end
         push!(records, record)
     end
     return records
 end
 
-function fetchseq_ensembl(ids::AbstractVector{<:AbstractString}; format::Format = fasta)
+function fetchseq_ensembl(ids::AbstractVector; format::Format = fasta)
     isempty(ids) && return []
     records = []
     contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
@@ -92,9 +130,9 @@ function fetchseq_ensembl(ids::AbstractVector{<:AbstractString}; format::Format 
         body = IOBuffer(response.body)
         if format == fasta
             reader = FASTA.Reader(body)
-            records = first(reader)
+            record = first(reader)
         else
-            records = readgbk(body)
+            record = readgbk(body)
         end
         push!(records, record)
     end
