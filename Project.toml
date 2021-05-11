@@ -9,7 +9,13 @@ FASTX = "c2308a5c-f048-11e8-3e8a-31650f418d12"
 GenomicAnnotations = "4f8a0a0a-376d-5ac0-ab14-e88793df67f0"
 
 [compat]
-julia = "1.6"
 BioServices = "0.4"
 FASTX = "1"
 GenomicAnnotations = "0.2"
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

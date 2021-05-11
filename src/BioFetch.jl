@@ -66,7 +66,7 @@ function fetchseq(id::AbstractString; format::SeqFormat = fasta)
            ebiensembl ? fetchseq_ensembl([id]; format) :
            error("could not infer database for $id")
     
-    return format == fasta && length(result) == 1 ? first(result) : result
+    return result
 end
 
 function fetchseq_ncbi(ids, db::AbstractString; format::SeqFormat = fasta)
