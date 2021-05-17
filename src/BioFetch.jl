@@ -22,12 +22,12 @@ GenBank format may not work right now.
 fetchseq("AH002844")                # retrive one FASTA NCBI nucleotide record
 fetchseq(["CAA41295.1", "NP_000176"]) # retrieve two FASTA NCBI protein records
 fetchseq("NC_036893.1", 81_775_230 .+ (1:1_000_000))         # retrive a 1 Mb segment of a FASTA NCBI genomic record
-fetchseq("NC_036893.1", 81000000:81999999, revstrand = true) # retrive a 1 Mb segment of a FASTA NCBI genomic record on the reverse strand
+fetchseq("NC_036893.1", 81000000:81999999, true) # retrive a 1 Mb segment of a FASTA NCBI genomic record on the reverse strand
 ```
 
 `range` and `revstrand` are only valid for nucleotide queries
 """
-function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, AbstractUnitRange} = nothing; format::SeqFormat = fasta, revstrand = false)
+function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, AbstractUnitRange} = nothing, revstrand = false; format::SeqFormat = fasta)
     ncbinucleotides = String[]
     ncbiproteins = String[]
     ebiuniprots = String[]
@@ -58,7 +58,7 @@ function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, A
     return results[order]
 end
 
-function fetchseq(id::AbstractString, range::Union{Nothing, AbstractUnitRange} = nothing; format::SeqFormat = fasta, revstrand = false)
+function fetchseq(id::AbstractString, range::Union{Nothing, AbstractUnitRange} = nothing, revstrand = false; format::SeqFormat = fasta)
     ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
     ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
     ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
