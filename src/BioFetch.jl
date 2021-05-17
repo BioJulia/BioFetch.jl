@@ -27,7 +27,7 @@ fetchseq("NC_036893.1", 81000000:81999999, true) # retrive a 1 Mb segment of a F
 
 `range` and `revstrand` are only valid for nucleotide queries
 """
-function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, AbstractUnitRange} = nothing, revstrand = false; format::SeqFormat = fasta)
+function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, AbstractRange} = nothing, revstrand = false; format::SeqFormat = fasta)
     ncbinucleotides = String[]
     ncbiproteins = String[]
     ebiuniprots = String[]
@@ -58,7 +58,7 @@ function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, A
     return results[order]
 end
 
-function fetchseq(id::AbstractString, range::Union{Nothing, AbstractUnitRange} = nothing, revstrand = false; format::SeqFormat = fasta)
+function fetchseq(id::AbstractString, range::Union{Nothing, AbstractRange} = nothing, revstrand = false; format::SeqFormat = fasta)
     ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
     ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
     ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
@@ -73,7 +73,7 @@ function fetchseq(id::AbstractString, range::Union{Nothing, AbstractUnitRange} =
     return result
 end
 
-function fetchseq_ncbi(ids, db::AbstractString; format::SeqFormat = fasta, range::Union{Nothing, AbstractUnitRange} = nothing, revstrand = false)
+function fetchseq_ncbi(ids, db::AbstractString; format::SeqFormat = fasta, range::Union{Nothing, AbstractRange} = nothing, revstrand = false)
     isempty(ids) && return []
     if isnothing(range)
         response = efetch(; db, id = ids, rettype = String(Symbol(format)), retmode="text", strand = revstrand ? 2 : 1)
