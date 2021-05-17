@@ -36,7 +36,7 @@ function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, A
     for (i, id) ∈ enumerate(ids)
         ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
         ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
-        ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
+        ncbinucleotide = startswith(id, r"[NX][CGRTMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
         ebiuniprot = startswith(id, r"[A-Z][0-9][A-Z0-9]{4}")
         ncbiprotein || ncbinucleotide || ebiuniprot || ebiensembl || throw("could not infer database for $id")
 
@@ -61,7 +61,7 @@ end
 function fetchseq(id::AbstractString, range::Union{Nothing, AbstractRange} = nothing, revstrand = false; format::SeqFormat = fasta)
     ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
     ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
-    ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
+    ncbinucleotide = startswith(id, r"[NX][CGRTMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
     ebiuniprot = startswith(id, r"[A-Z][0-9][A-Z0-9]{4}")
 
     result = ncbinucleotide ? fetchseq_ncbi(id, "nuccore"; format, range, revstrand) :
