@@ -20,14 +20,14 @@ GenBank format may not work right now.
 
 ```julia
 fetchseq("AH002844")                # retrive one FASTA NCBI nucleotide record
-fetchseq("CAA41295.1", "NP_000176") # retrieve two FASTA NCBI protein records
-fetchseq("NC_036893.1", range = 81_775_230 .+ (1:1_000_000))         # retrive a 1 Mb segment of a FASTA NCBI genomic record
-fetchseq("NC_036893.1", range = 81000000:81999999, revstrand = true) # retrive a 1 Mb segment of a FASTA NCBI genomic record on the reverse strand
+fetchseq(["CAA41295.1", "NP_000176"]) # retrieve two FASTA NCBI protein records
+fetchseq("NC_036893.1", 81_775_230 .+ (1:1_000_000))         # retrive a 1 Mb segment of a FASTA NCBI genomic record
+fetchseq("NC_036893.1", 81000000:81999999, revstrand = true) # retrive a 1 Mb segment of a FASTA NCBI genomic record on the reverse strand
 ```
 
 `range` and `revstrand` are only valid for nucleotide queries
 """
-function fetchseq(ids::AbstractString...; format::SeqFormat = fasta, range::AbstractUnitRange = nothing, revstrand = false)
+function fetchseq(ids::AbstractVector{<:AbstractString}, range::Union{Nothing, AbstractUnitRange} = nothing; format::SeqFormat = fasta, revstrand = false)
     ncbinucleotides = String[]
     ncbiproteins = String[]
     ebiuniprots = String[]
@@ -58,7 +58,7 @@ function fetchseq(ids::AbstractString...; format::SeqFormat = fasta, range::Abst
     return results[order]
 end
 
-function fetchseq(id::AbstractString; format::SeqFormat = fasta, range::Union{Nothing, AbstractUnitRange} = nothing, revstrand = false)
+function fetchseq(id::AbstractString, range::Union{Nothing, AbstractUnitRange} = nothing; format::SeqFormat = fasta, revstrand = false)
     ebiensembl = startswith(id, r"ENS[A-Z][0-9]{11}")
     ncbiprotein = startswith(id, r"[NX]P_|[A-Z]{3}[0-9]")
     ncbinucleotide = startswith(id, r"[NX][CGRMW]_|[A-Z]{2}[0-9]|[A-Z]{4,6}[0-9]") && !ebiensembl
@@ -75,7 +75,11 @@ end
 
 function fetchseq_ncbi(ids, db::AbstractString; format::SeqFormat = fasta, range::Union{Nothing, AbstractUnitRange} = nothing, revstrand = false)
     isempty(ids) && return []
-    response = efetch(; db, id = ids, rettype = String(Symbol(format)), retmode="text", seq_start = first(range), seq_stop = last(range), strand = revstrand ? 2 : 1)
+    if isnothing(range)
+        response = efetch(; db, id = ids, rettype = String(Symbol(format)), retmode="text", strand = revstrand ? 2 : 1)
+    else
+        response = efetch(; db, id = ids, rettype = String(Symbol(format)), retmode="text", seq_start = first(range), seq_stop = last(range), strand = revstrand ? 2 : 1)
+    end
     body = IOBuffer(response.body)
     reader = format == fasta ? FASTA.Reader(body) :
              format == gb ? GenBank.Reader(body) :
@@ -84,7 +88,7 @@ function fetchseq_ncbi(ids, db::AbstractString; format::SeqFormat = fasta, range
     return records
 end
 
-function fetchseq_uniprot(ids::AbstractVector; format::SeqFormat = fasta, range::Union{Nothing, AbstractUnitRange} = nothing)
+function fetchseq_uniprot(ids::AbstractVector; format::SeqFormat = fasta)
     isempty(ids) && return []
     records = []
     contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
@@ -100,7 +104,7 @@ function fetchseq_uniprot(ids::AbstractVector; format::SeqFormat = fasta, range:
     return records
 end
 
-function fetchseq_ensembl(ids::AbstractVector; format::SeqFormat = fasta, range::Union{Nothing, AbstractUnitRange} = nothing)
+function fetchseq_ensembl(ids::AbstractVector; format::SeqFormat = fasta)
     isempty(ids) && return []
     records = []
     contenttype = format == fasta ? "text/x-fasta" : format == gb ? "text/flatfile" : error("unknown format")
