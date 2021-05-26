@@ -12,6 +12,6 @@ fetchseq("AH002844")                             # retrive one NCBI nucleotide r
 fetchseq("CAA41295.1", "NP_000176", format = gb) # retrieve two NCBI protein records as GenBank Flat File
 fetchseq("Q00987")                               # retrieve one UniProt protein record as FASTA
 fetchseq("ENSG00000141510")                      # retrieve one Ensembl gene record's proteins as FASTA
-fetchseq("NC_036893.1", range = 81_775_230 .+ (1:1_000_000))         # retrive a 1 Mb segment of a FASTA NCBI genomic record
-fetchseq("NC_036893.1", range = 81000000:81999999, revstrand = true) # retrive a 1 Mb segment of a FASTA NCBI genomic record on the reverse strand
+fetchseq("NC_036893.1", 81_775_230 .+ (1:1_000_000))         # retrive a 1 Mb segment of a FASTA NCBI genomic record
+fetchseq("NC_036893.1", 81000000:81999999, true) # retrive a 1 Mb segment of a FASTA NCBI genomic record on the reverse strand
 ```
