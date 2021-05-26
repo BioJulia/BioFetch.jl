@@ -10,7 +10,7 @@ export fetchseq, SeqFormat, fasta, gb
 @enum SeqFormat fasta gb
 
 """
-    fetchseq(ids::AbstractString...; format::SeqFormat = fasta, range::AbstractUnitRange = nothing, revstrand = false)
+    fetchseq(ids::AbstractString::AbstractVector{<:AbstractString}, range::Union{Nothing, AbstractRange} = nothing, revstrand = false; format::SeqFormat = fasta)
 
 Fetches sequence data from a database by accession number in either FASTA format or GenBank flatfile format.
 Nucleotide and protein records may be mixed. Results will be returned in the order provided.
