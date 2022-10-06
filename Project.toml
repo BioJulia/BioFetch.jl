@@ -1,7 +1,7 @@
 name = "BioFetch"
 uuid = "f8217676-c24a-4825-a874-ba6ce2a4fe08"
 authors = ["Nicholas Bauer <nicholasbauer@outlook.com>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 BioServices = "a0d4ced5-b29c-5395-b614-ca030a679c4b"
@@ -10,8 +10,8 @@ GenomicAnnotations = "4f8a0a0a-376d-5ac0-ab14-e88793df67f0"
 
 [compat]
 BioServices = "0.4"
-FASTX = "1"
-GenomicAnnotations = "0.2"
+FASTX = "1, 2"
+GenomicAnnotations = "0.2, 0.3"
 julia = "1.6"
 
 [extras]
